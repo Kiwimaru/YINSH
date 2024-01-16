@@ -1,0 +1,135 @@
+body {
+    display: flex;
+    align-items: center;
+    background-color: #D8DFE6;
+    flex-direction: column;
+  }
+  
+  .circle-container {
+    display: flex;
+    justify-content: center; /* Center the circles horizontally */
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+  
+  .circle-letter::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(
+            circle at 70% 50%, /* Position the gradient to the right side */
+            transparent 60%, /* Size of the transparent area, creating the crescent shape */
+            rgba(0, 0, 0, 0.3) 80% /* Start of the shadow */
+    );
+    border-radius: 50%; /* Make it round */
+    clip-path: inset(0 50% 0 0); /* Clip the right half of the pseudo-element */
+    z-index: 1; /* Place it above the blue background but below the text */
+  }
+  
+  .circle-letter {
+    z-index: 2; /* Above the ::before pseudo-element */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background-color: #495F70; /* Blue circle color */
+    color: #FFFFFF;
+    margin: 0 14px;
+    border-radius: 50%;
+    font-size: 52px;
+    user-select: text;
+    cursor: text;
+    box-shadow: 0 0 0 2px white, 0 0 0 9px black; /* 5px white rim and 10px black rim */ /* 5px black rim */
+  }
+  
+  p {
+    margin-top: 5px;
+    padding-left: 30px;
+    font-size: 20px;
+  }
+  
+  h1 {
+    margin-top: 0px; /* Reduces space above the h2 element */
+  }
+  
+  h2 {
+    background-color: black; /* Black background */
+    color: white; /* White text */
+  
+    text-align: center; /* Center the text within the black background */
+    padding: 10px 0; /* Add some padding above and below the text */
+    margin: 20px 0 20px 40px; /* Add top and bottom margins and 90px left margin */
+    box-sizing: border-box; /* Include padding in the width */
+    font-family: 'Arial', sans-serif; /* This is a guess, as I cannot see the image */
+  }
+  
+  ul {
+    margin-left: 30px;
+  }
+  
+  ul.dashed {
+    list-style-type: none;
+  }
+  
+  ul.dashed > li {
+    padding-left: 20px; /* Same as text indent, to align wrapped lines */
+    font-size: 20px;
+    position: relative; /* To position the pseudo-element with the dash */
+  }
+  
+  ul.dashed > li:before {
+    content: "-"; /* Keep the dash */
+    position: absolute; /* Absolute position */
+    left: 0; /* Align with the start of the list item */
+  }
+  #turnCounter, #markerCounter, #outcome {
+    text-align: center;
+    margin-top: 0px;
+    padding-left: 0px;
+  }
+  
+  #yinshBoard {
+    border: 5px solid #2D4745;
+    background-image: radial-gradient(circle, #A5C4CE, #63767C);
+    box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3); /* Optional: Adds a subtle shadow for depth */
+  }
+  
+  .button-container button {
+    padding: 10px 20px;
+    margin: 0 10px;
+    border: 3px solid #2D4745;
+    border-radius: 5px;
+    background-color: #58727d;
+    color: white;
+    font-size: 16px;
+    cursor: default; /* Default cursor to ensure it only changes on hover */
+    transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+  }
+  
+  .button-container button:hover {
+    background-color: #8098A0;
+    color: white;
+    cursor: pointer; /* Changes the cursor on hover */
+    border-color: #2D4745;
+  }
+  
+  .button-container button:active {
+    transform: translateY(2px); /* Gives a feeling of the button being pressed */
+  }
+  
+  .content-box {
+    background-color: white; /* Set the background to white */
+    margin: 20px 90px; /* Add some space around the box */
+    padding: 20px; /* Add some space inside the box */
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2); /* Optional: Adds a subtle shadow for depth */
+  }
+  
+  ::selection {
+    background: #173A6A; /* Color when text is selected/highlighted */
+    color: #FFFFFF;
+  }
