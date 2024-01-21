@@ -12,6 +12,6 @@ YINSH Yinsh is a two-player abstract-strategy board game on a hexagonal grid con
 
 **GitHub Page Link:** https://kiwimaru.github.io/YINSH/
 
-![image](https://github.com/Kiwimaru/YINSH/assets/156695760/e60ff02e-ba03-4ad4-8af5-db2926a7919c)
+![image](https://github.com/Kiwimaru/YINSH/assets/156695760/36ff80cf-6168-4309-b996-2e0a82f56218)
 
 
