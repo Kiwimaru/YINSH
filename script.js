@@ -36,6 +36,8 @@ document.addEventListener("DOMContentLoaded", function() {
 
     let selectSequence = false;
     let selectSequenceAtStart = false;
+    let botEnabled = false;
+    window.toggleBot = toggleBot;
 
     function drawGrid() {
         gameBoard.draw(rings, markers, possibleMoves, clickableMarkers);
@@ -123,7 +125,7 @@ document.addEventListener("DOMContentLoaded", function() {
             saveState();
             document.getElementById('undoButton').disabled = false;
             internalBoard[row][col] = ringNumber;
-            rings.push({ x: col * horizontalSpacing + horizontalSpacing / 2 + margin, y: row * verticalSpacing + verticalSpacing / 2 + margin, number: ringNumber});
+            rings.push({ x: col * horizontalSpacing + horizontalSpacing / 2 + margin, y: row * verticalSpacing + verticalSpacing / 2 + margin, row: col, col: row, number: ringNumber});
             turnCount++; // Increment turn count
             updateTurnDisplay(); // Update the turn display
             gameBoard.drawRings(rings);
@@ -131,6 +133,10 @@ document.addEventListener("DOMContentLoaded", function() {
             playPiecePlacedSound();
         } else{
             console.log("All rings placed. No further placement allowed.");
+        }
+
+        if (botEnabled && turnCount % 2 !== 0) {
+            setTimeout(makeBotMove, 500); // Delay to simulate thinking time
         }
     }
 
@@ -295,6 +301,8 @@ document.addEventListener("DOMContentLoaded", function() {
            rings.push({
                x: newCol * horizontalSpacing + horizontalSpacing / 2 + margin,
                y: newRow * verticalSpacing + verticalSpacing / 2 + margin,
+               row: newCol,
+               col: newRow,
                number: ringNumber
            });
            flipMarkersAlongPath(selectedRing.row, selectedRing.col, newRow, newCol);
@@ -304,10 +312,30 @@ document.addEventListener("DOMContentLoaded", function() {
            if (hasSequencesToRemove((currentPlayer))) {
                selectSequence = true;
                gameState = 'selectingSequence';
+               while (botEnabled && turnCount % 2 !== 0 && hasSequencesToRemove(currentPlayer) && gameOver === false) {
+                    removeMarkerSequence(clickableMarkers[0].row, clickableMarkers[0].col);
+                    // Randomly select a ring
+                    const whiteRings = rings.filter(ring => ring.number === 2);
+                    const randomIndex = Math.floor(Math.random() * whiteRings.length);
+                    const selectedBotRing = whiteRings[randomIndex];
+                    removeRingIfClicked(selectedBotRing.col, selectedBotRing.row);
+                 }
            } else if (hasSequencesToRemove(-currentPlayer)) {
                gameState = 'removingSequenceAtStart';
                turnCount++;
                updateTurnDisplay();
+               if (botEnabled && turnCount % 2 !== 0) {
+                    checkForMarkerSequences(1);
+                    removeMarkerSequence(clickableMarkers[0].row, clickableMarkers[0].col);
+                    let ringWithNumberTwo = rings.find(ring => ring.number > 0);
+                    removeRingIfClicked(ringWithNumberTwo.col, ringWithNumberTwo.row);
+                    turnCount--;
+                    updateTurnDisplay();
+                    gameState = 'movingRing';
+                    if (!gameOver){
+                        makeBotMove();
+                    }
+                }
            } else {
                // Only increment turnCount if there are no sequences to remove
                turnCount++;
@@ -339,6 +367,10 @@ document.addEventListener("DOMContentLoaded", function() {
            }
 
            drawGrid();
+
+           if (botEnabled && turnCount % 2 !== 0) {
+                setTimeout(makeBotMove, 500); // Delay to simulate thinking time
+            }
        });
     }
 
@@ -486,6 +518,7 @@ document.addEventListener("DOMContentLoaded", function() {
                     outcome = winner + " wins the game!";
                     updateOutcomeDisplay();
                     gameOver = true; // Set the game over state
+                    return;
                 }
 
                 // Recheck for sequences
@@ -499,6 +532,9 @@ document.addEventListener("DOMContentLoaded", function() {
                     if (!selectSequenceAtStart) {
                         turnCount++;
                         updateTurnDisplay();
+                        if (botEnabled && turnCount % 2 !== 0) {
+                            makeBotMove();
+                        }
                     }
                     console.log("Ring Index: " + ringIndex);
                 }
@@ -538,8 +574,6 @@ document.addEventListener("DOMContentLoaded", function() {
         if (turnCount < 11) {
             gameState = 'placingRings';
         } else if (selectSequence && gameState === 'removingSequenceAtStart') {
-            console.log("selectSequence && gameState === 'removingSequenceAtStart");
-            console.log(hasSequencesToRemove(currentPlayerColor));
             if (hasSequencesToRemove(currentPlayerColor)) {
                 gameState = 'selectingSequence';
             } else {
@@ -627,6 +661,9 @@ document.addEventListener("DOMContentLoaded", function() {
             console.log("Game over. No further interactions allowed.");
             return;
         }
+        if (botEnabled && turnCount % 2 !== 0) {
+            return;
+        }
         getCursorPosition(canvas, event);
     });
 
@@ -657,7 +694,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
         history.push(currentState);
         future = []; // Clear the redo history when a new action is taken
-        console.log(history.length);
     }
 
     // Helper method to load a saved state
@@ -673,7 +709,6 @@ document.addEventListener("DOMContentLoaded", function() {
         selectedRing = null;
         clickableMarkers = [];
         // Load other relevant game state properties
-        console.log("Loaded markers: " + markers);
         updateTurnDisplay();
         updateMarkerDisplay();
         drawGrid(); // Redraw the board with the loaded state
@@ -739,7 +774,9 @@ document.addEventListener("DOMContentLoaded", function() {
         gameState = 'movingRing';
         selectSequence = false;
         selectSequenceAtStart = false;
-
+        document.getElementById('botCheckbox').checked = false;
+        botEnabled = false;
+        
         updateTurnDisplay();
         updateMarkerDisplay();
         updateOutcomeDisplay();
@@ -767,6 +804,8 @@ document.addEventListener("DOMContentLoaded", function() {
             rings.push({
                 x: position.col * horizontalSpacing + horizontalSpacing / 2 + margin,
                 y: position.row * verticalSpacing + verticalSpacing / 2 + margin,
+                row: position.col,
+                col: position.row ,
                 number: ringNumber
             });
             ringNumber *= -1; // Flip the ring number
@@ -798,5 +837,174 @@ document.addEventListener("DOMContentLoaded", function() {
 
     updateUndoButtonState();
     updateRedoButtonState();
+
+    function toggleBot() {
+        botEnabled = document.getElementById('botCheckbox').checked;
+        if (botEnabled && turnCount % 2 !== 0) { // Check if it's White's turn
+            makeBotMove();
+        }
+    }
+
+    function makeBotMove() {
+        let boardCopy = internalBoard.map(row => row.slice());
+        let selectedBotRing = null;
+
+        // Check if it's the bot's turn
+        if (botEnabled && turnCount % 2 !== 0 && gameState === 'placingRings') {
+            let emptySpots = [];
+
+            // Find all empty spots
+            for (let row = 0; row < internalBoard.length; row++) {
+                for (let col = 0; col < internalBoard[row].length; col++) {
+                    if (internalBoard[row][col] === 0) {
+                        emptySpots.push({ row, col });
+                    }
+                }
+            }
+
+            // Select a random spot
+            let randomIndex = Math.floor(Math.random() * emptySpots.length);
+            let randomSpot = emptySpots[randomIndex];
+
+            // Make the move
+            addRingToBoard(randomSpot.row, randomSpot.col);
+        }
+
+        if (botEnabled && turnCount % 2 !== 0 && gameState === 'movingRing') {
+            console.log("Bot's turn for moving Ring")
+            // Find all of White's rings
+            let whiteRings = [];
+            for (let row = 0; row < boardCopy.length; row++) {
+                for (let col = 0; col < boardCopy[row].length; col++) {
+                    if (boardCopy[row][col] === 2) { // Assuming 2 represents a White ring
+                        whiteRings.push({ row, col });
+                    }
+                }
+            }
+
+            // Evaluate and select the best move
+            let bestScore = -Infinity;
+            let bestMove = null;
+            let bestRing = null;
+
+            // Select a White ring
+            for (let ring of whiteRings) {
+                selectBotRing(ring.row, ring.col);
+                for (let move of possibleMoves) {
+                    let tempBoard = simulateMove(move[0], move[1], boardCopy);
+                    let score = evaluateBoard(tempBoard);
+                    console.log(score);
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                        bestRing = ring;
+                    }
+                }
+            }
+
+            console.log(bestScore);
+            if (bestMove) {
+                selectRing(bestRing.row, bestRing.col)
+                moveRing(bestMove[0], bestMove[1]);
+            }
+        }
+        function selectBotRing(row, col) {
+            selectedBotRing = { row, col };
+            getPossibleMoves(row, col);
+        }
+
+        function simulateMove(newRow, newCol, board) {
+            if (!possibleMoves.some(point => point[0] === newRow && point[1] === newCol)) {
+                console.log("Invalid move");
+                return;
+            }
+            let tempBoard = board.map(row => row.slice());
+
+            let ringNumber = turnCount % 2 !== 0 ? 2 : -2;
+            // Place a marker at the ring.
+            tempBoard[selectedBotRing.row][selectedBotRing.col] = turnCount % 2 !== 0 ? 1 : -1;
+            tempBoard[newRow][newCol] = ringNumber;
+
+            tempBoard = flipMarkersForBot(selectedBotRing.row, selectedBotRing.col, newRow, newCol, tempBoard);
+
+            return tempBoard;
+        }
+
+        function flipMarkersForBot(startRow, startCol, endRow, endCol, tempBoard) {
+            const allPaths = verticalLists.concat(diagonalLists, antiDiagonalLists);
+
+            allPaths.forEach(path => {
+                if (path.some(point => point[0] === startRow && point[1] === startCol) &&
+                    path.some(point => point[0] === endRow && point[1] === endCol)) {
+
+                    let startIndex = path.findIndex(point => point[0] === startRow && point[1] === startCol);
+                    let endIndex = path.findIndex(point => point[0] === endRow && point[1] === endCol);
+
+                    if (startIndex > endIndex) {
+                        [startIndex, endIndex] = [endIndex, startIndex]; // Swap if start is greater than end
+                    }
+
+                    for (let i = startIndex + 1; i < endIndex; i++) {
+                        let [row, col] = path[i];
+                        if (tempBoard[row][col] === 1 || boardCopy[row][col] === -1) {
+                            tempBoard[row][col] *= -1; // Flip the marker
+                        }
+                    }
+                }
+            });
+            return tempBoard;
+        }
+    }
+
+    function evaluateBoard(board) {
+        let score = 0;
+        score += evaluateLines(board, verticalLists);
+        score += evaluateLines(board, diagonalLists);
+        score += evaluateLines(board, antiDiagonalLists);
+        return score;
+    }
+
+    function evaluateLines(board, lines) {
+        let lineScore = 0;
+        for (let line of lines) {
+            if (line.length < 5) {
+                continue;
+            }
+            lineScore += evaluateSingleLine(board, line, 1);
+            lineScore -= evaluateSingleLine(board, line, -1);
+        }
+        return lineScore;
+    }
+
+    function evaluateSingleLine(board, line, player) {
+        let markersInRow = 0;
+        let lineScore = 0;
+
+        for (let point of line) {
+            if (board[point[0]][point[1]] === player) {
+                markersInRow++;
+            } else if (board[point[0]][point[1]] === 2 * player) {
+                markersInRow += 0.5;
+            } else if (board[point[0]][point[1]] === -2 * player) {
+                markersInRow -= 0.6;
+            } else {
+                lineScore += calculateScore(markersInRow);
+                markersInRow = 0
+            }
+        }
+
+        // Calculate score for the last segment
+        lineScore += calculateScore(markersInRow);
+
+        return lineScore;
+    }
+    
+    function calculateScore(markersInRow) {
+        if (markersInRow > 0) {
+            return Math.pow(3, markersInRow - 1);
+        }
+        return 0;
+    }
+
     gameBoard.draw(rings, markers, possibleMoves, clickableMarkers);
 });

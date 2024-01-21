@@ -36,13 +36,15 @@
     <button id="randomizeRings">Reset and Randomize Ring Placement</button>
     <button id="redoButton">&#8594;</button>
 </div>
+<input type="checkbox" id="botCheckbox" onchange="toggleBot()">
+<label for="botCheckbox">Greedy Bot (White)</label>
 <div class="content-box">
  <h2>NOTES:</h2>
     <ul class="dashed">
         <li>There are 85 points on the board.</li>
         <li>There are (85 choose 5) * (80 choose 5) possible ways to arrange the ten rings from the first 10 turns. That is <b>788,548,993,504,272 (788 Trillion) combinations</b>.</li>
         <li>The 123 ways to form a row of five on the board.</li>
-        <li>The average branching factor is 40.</li>
+        <li>The average branching factor is 44.</li>
         <li>81 is the maximum number of turns possible for YINSH.</li>
     </ul>
 </div>
